@@ -1,0 +1,8 @@
+# if nvm-windows is installed
+nvm install 20.19.0
+nvm use 20.19.0
+node -v   # should show v20.x
+
+cd C:\Users\Ala\Desktop\auto-fairy\maintenance-call
+npm install
+npx expo start
