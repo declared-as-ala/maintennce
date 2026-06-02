@@ -66,8 +66,7 @@ export interface Esp32CallPayload {
 // Acknowledgement payload sent to ESP32
 export interface AckPayload {
   zone: ZoneId | 'ALL';
-  acknowledgedBy: 'mobile-app';
-  timestamp: string;
+  btn?: ButtonId;
 }
 
 // MQTT message structure
