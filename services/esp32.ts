@@ -1,4 +1,4 @@
-import { ZoneId, AckPayload } from '../types/maintenance';
+import { ZoneId, ButtonId, AckPayload } from '../types/maintenance';
 
 // --- ESP32 LOCAL HTTP COMMUNICATION ---
 // The ESP32 receiver exposes a simple HTTP server on the local WiFi.
@@ -19,7 +19,7 @@ export function setEsp32BaseUrl(url: string): void {
 
 async function post(path: string, body: object): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
   try {
     const response = await fetch(`${esp32BaseUrl}${path}`, {
@@ -34,17 +34,13 @@ async function post(path: string, body: object): Promise<Response> {
   }
 }
 
-export async function sendAckToEsp32(zoneId: ZoneId): Promise<boolean> {
+export async function sendAckToEsp32(zoneId: ZoneId, buttonId: ButtonId = 'B1'): Promise<boolean> {
   const payload: AckPayload = {
     zone: zoneId,
-    acknowledgedBy: 'mobile-app',
-    timestamp: new Date().toISOString(),
+    btn: buttonId,
   };
 
   try {
-    // HTTP POST to ESP32
-    // Endpoint: POST /ack
-    // Body: { "zone": "Z1", "acknowledgedBy": "mobile-app", "timestamp": "..." }
     const response = await post('/ack', payload);
     return response.ok;
   } catch (error) {
@@ -60,8 +56,6 @@ export async function sendAckToEsp32(zoneId: ZoneId): Promise<boolean> {
 export async function sendAckAllToEsp32(): Promise<boolean> {
   const payload: AckPayload = {
     zone: 'ALL',
-    acknowledgedBy: 'mobile-app',
-    timestamp: new Date().toISOString(),
   };
 
   try {
