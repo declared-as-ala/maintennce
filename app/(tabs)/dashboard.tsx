@@ -47,17 +47,31 @@ export default function DashboardScreen() {
     setConnectionStatus('local');
 
     const payload = status as {
-      zones?: Record<string, string>;
+      zones?: Record<string, Record<string, string> | string>;
       activeButtons?: Record<string, string>;
     };
 
     for (const zone of zones) {
-      const zoneStatus = payload.zones?.[zone.id];
-      const rawBtn = payload.activeButtons?.[zone.id];
-      const buttonId = (rawBtn?.match(/^B[1-4]$/)?.[0] as ButtonId | undefined) ?? 'B1';
+      const zoneData = payload.zones?.[zone.id];
+      let zoneIsCall = false;
+      let buttonId: ButtonId = 'B1';
+
+      if (typeof zoneData === 'string') {
+        // Old firmware format: "CALL" | "OK"
+        zoneIsCall = zoneData === 'CALL';
+        const rawBtn = payload.activeButtons?.[zone.id];
+        buttonId = (rawBtn?.match(/^B[1-4]$/)?.[0] as ButtonId) ?? 'B1';
+      } else if (typeof zoneData === 'object' && zoneData !== null) {
+        // New firmware format: {"B1":"PANNE","B2":"OK",...}
+        const activeEntry = Object.entries(zoneData).find(([, v]) => v === 'PANNE');
+        if (activeEntry) {
+          zoneIsCall = true;
+          buttonId = (activeEntry[0].match(/^B[1-4]$/)?.[0] as ButtonId) ?? 'B1';
+        }
+      }
 
       // Trigger receive flow only on edge (OK -> CALL) to avoid duplicate notifications.
-      if (zoneStatus === 'CALL' && zone.status !== 'CALL') {
+      if (zoneIsCall && zone.status !== 'CALL') {
         await receiveCall(zone.id, buttonId, 'esp32');
       }
     }
