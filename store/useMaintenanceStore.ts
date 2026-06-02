@@ -204,6 +204,8 @@ export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
 
   acknowledgeZone: async (zoneId: ZoneId) => {
     const now = new Date().toISOString();
+    // Capture active button before state is reset to null
+    const activeButton = get().zones.find((z) => z.id === zoneId)?.activeButton ?? 'B1';
 
     // Update local SQLite
     await DatabaseService.acknowledgeZoneCalls(zoneId, now);
@@ -247,7 +249,7 @@ export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
     const ackPromises: Promise<boolean>[] = [];
 
     if (settings.connectionMode !== 'cloud') {
-      ackPromises.push(Esp32Service.sendAckToEsp32(zoneId));
+      ackPromises.push(Esp32Service.sendAckToEsp32(zoneId, activeButton));
     }
     if (settings.backendApiUrl && settings.connectionMode !== 'local') {
       ackPromises.push(ApiService.acknowledgeZoneOnBackend(zoneId));
